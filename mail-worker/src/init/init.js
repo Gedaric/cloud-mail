@@ -15,8 +15,60 @@ const init = {
 		await this.v1_2DB(c);
 		await this.v1_3DB(c);
 		await this.v1_3_1DB(c);
+		await this.v1_4DB(c);
 		await settingService.refresh(c);
 		return c.text('初始化成功');
+	},
+
+	async v1_4DB(c) {
+		await c.env.db.prepare(`
+      CREATE TABLE IF NOT EXISTS reg_key (
+				rege_key_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				code TEXT NOT NULL COLLATE NOCASE DEFAULT '',
+				count INTEGER NOT NULL DEFAULT 0,
+				role_id INTEGER NOT NULL DEFAULT 0,
+				user_id INTEGER NOT NULL DEFAULT 0,
+				expire_time DATETIME,
+				create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+		// 添加不区分大小写的唯一索引
+		try {
+			await c.env.db.prepare(`
+				CREATE UNIQUE INDEX IF NOT EXISTS idx_setting_code ON reg_key(code COLLATE NOCASE)
+			`).run();
+		} catch (e) {
+			console.warn(`跳过创建索引，原因：${e.message}`);
+		}
+
+
+		try {
+			await c.env.db.prepare(`
+        INSERT INTO perm (perm_id, name, perm_key, pid, type, sort) VALUES
+        (33,'注册密钥', NULL, 0, 1, 5.1),
+        (34,'密钥查看', 'reg-key:query', 33, 2, 0),
+        (35,'密钥添加', 'reg-key:add', 33, 2, 1),
+        (36,'密钥删除', 'reg-key:delete', 33, 2, 2)`).run();
+		} catch (e) {
+			console.warn(`跳过数据，原因：${e.message}`);
+		}
+
+		const ADD_COLUMN_SQL_LIST = [
+			`ALTER TABLE setting ADD COLUMN reg_key INTEGER NOT NULL DEFAULT 1;`,
+			`ALTER TABLE role ADD COLUMN ban_email TEXT NOT NULL DEFAULT '';`,
+			`ALTER TABLE role ADD COLUMN ban_email_type INTEGER NOT NULL DEFAULT 0;`,
+			`ALTER TABLE user ADD COLUMN reg_key_id INTEGER NOT NULL DEFAULT 0;`
+		];
+
+		for (let sql of ADD_COLUMN_SQL_LIST) {
+			try {
+				await c.env.db.prepare(sql).run();
+			} catch (e) {
+				console.warn(`跳过字段添加，原因：${e.message}`);
+			}
+		}
+
 	},
 
 	async v1_3_1DB(c) {

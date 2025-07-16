@@ -48,7 +48,7 @@ const accountService = {
 
 		if (roleRow.accountCount && userRow.email !== c.env.admin) {
 			const userAccountCount = await accountService.countUserAccount(c, userId)
-			if(userAccountCount >= roleRow.accountCount) throw new BizError(`添加邮箱数量限制${roleRow.accountCount}个`, 403);
+			if(userAccountCount >= roleRow.accountCount) throw new BizError(`添加邮箱数量到达限制`, 403);
 		}
 
 		if (await settingService.isAddEmailVerify(c)) {
@@ -181,6 +181,9 @@ const accountService = {
 
 	async setName(c, params, userId) {
 		const { name, accountId } = params
+		if (name.length > 30) {
+			throw new BizError('用户名长度超出限制');
+		}
 		await orm(c).update(account).set({name}).where(and(eq(account.userId, userId),eq(account.accountId, accountId))).run();
 	}
 };

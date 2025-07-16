@@ -69,6 +69,8 @@
             </el-input>
             <el-input v-model="registerForm.password" placeholder="密码" type="password" autocomplete="off" />
             <el-input v-model="registerForm.confirmPassword" placeholder="确认密码" type="password" autocomplete="off" />
+            <el-input v-if="settingStore.settings.regKey === 0" v-model="registerForm.code" placeholder="注册码" type="text" autocomplete="off" />
+            <el-input v-if="settingStore.settings.regKey === 2" v-model="registerForm.code" placeholder="注册码（可选）" type="text" autocomplete="off" />
             <div v-show="verifyShow"
                 class="register-turnstile"
                 :data-sitekey="settingStore.settings.siteKey"
@@ -116,7 +118,8 @@ const suffix = ref('')
 const registerForm = reactive({
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  code: null
 })
 const domainList = settingStore.domainList;
 const registerLoading = ref(false)
@@ -248,6 +251,20 @@ function submitRegister() {
     return
   }
 
+  if(settingStore.settings.regKey === 0) {
+
+    if (!registerForm.code) {
+
+      ElMessage({
+        message: '注册码不能为空',
+        type: 'error',
+        plain: true,
+      })
+      return
+    }
+
+  }
+
   if (!verifyToken && settingStore.settings.registerVerify === 0) {
     verifyShow.value = true
     if (!turnstileId) {
@@ -263,11 +280,20 @@ function submitRegister() {
   }
 
   registerLoading.value = true
-  register({email: registerForm.email + suffix.value, password: registerForm.password, token: verifyToken}).then(() => {
+
+  const form = {
+    email: registerForm.email + suffix.value,
+    password: registerForm.password,
+    token: verifyToken,
+    code: registerForm.code
+  }
+
+  register(form).then(() => {
     show.value = 'login'
     registerForm.email = ''
     registerForm.password = ''
     registerForm.confirmPassword = ''
+    registerForm.code = ''
     registerLoading.value = false
     turnstileId = null
     verifyToken = ''

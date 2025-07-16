@@ -6,12 +6,15 @@ import rolePerm from '../entity/role-perm';
 import perm from '../entity/perm';
 import { permConst, roleConst } from '../const/entity-const';
 import userService from './user-service';
+import user from '../entity/user';
+import emailUtils from '../utils/email-utils';
+import verifyUtils from '../utils/verify-utils';
 
 const roleService = {
 
 	async add(c, params, userId) {
 
-		let { name, permIds } = params;
+		let { name, permIds, banEmail } = params;
 
 		if (!name) {
 			throw new BizError('身份名不能为空');
@@ -23,7 +26,15 @@ const roleService = {
 			throw new BizError('身份名已存在');
 		}
 
-		roleRow = await orm(c).insert(role).values({...params, userId}).returning().get();
+		const notEmailIndex = banEmail.findIndex(item => !verifyUtils.isEmail(item))
+
+		if (notEmailIndex > -1) {
+			throw new BizError('非法邮箱');
+		}
+
+		banEmail = banEmail.join(',')
+
+		roleRow = await orm(c).insert(role).values({...params, banEmail, userId}).returning().get();
 
 		if (permIds.length === 0) {
 			return;
@@ -44,6 +55,7 @@ const roleService = {
 			.where(eq(perm.type, permConst.type.BUTTON)).all();
 
 		roleList.forEach(role => {
+			role.banEmail = role.banEmail.split(",").filter(item => item !== "")
 			role.permIds = permList.filter(perm => perm.roleId === role.roleId).map(perm => perm.permId);
 		});
 
@@ -52,7 +64,7 @@ const roleService = {
 
 	async setRole(c, params) {
 
-		let { name, permIds, roleId } = params;
+		let { name, permIds, roleId, banEmail } = params;
 
 		if (!name) {
 			throw new BizError('名字不能为空');
@@ -60,7 +72,15 @@ const roleService = {
 
 		delete params.isDefault
 
-		await orm(c).update(role).set({...params}).where(eq(role.roleId, roleId)).run();
+		const notEmailIndex = banEmail.findIndex(item => !verifyUtils.isEmail(item))
+
+		if (notEmailIndex > -1) {
+			throw new BizError('非法邮箱');
+		}
+
+		banEmail = banEmail.join(',')
+
+		await orm(c).update(role).set({...params, banEmail}).where(eq(role.roleId, roleId)).run();
 		await orm(c).delete(rolePerm).where(eq(rolePerm.roleId, roleId)).run();
 
 		if (permIds.length > 0) {
@@ -126,6 +146,10 @@ const roleService = {
 			.leftJoin(rolePerm, eq(perm.permId, rolePerm.permId))
 			.leftJoin(role, eq(role.roleId, rolePerm.roleId))
 			.where(and(eq(perm.permKey, permKey), eq(role.sendType, sendType))).all();
+	},
+
+	selectByUserId(c, userId) {
+		return orm(c).select(role).from(user).leftJoin(role, eq(role.roleId, user.type)).where(eq(user.userId, userId)).get();
 	}
 };
 

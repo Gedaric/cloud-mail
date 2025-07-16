@@ -41,3 +41,7 @@ export function formatDetailDate(time) {
 export function tzDayjs(time) {
     return dayjs.utc(time).tz('Asia/Shanghai')
 }
+
+export function toUtc() {
+    return dayjs().utc()
+}

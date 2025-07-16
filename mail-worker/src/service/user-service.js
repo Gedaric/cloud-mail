@@ -382,6 +382,15 @@ const userService = {
 			await accountService.restoreByUserId(c, userId);
 		}
 
+	},
+
+	listByRegKeyId(c, regKeyId) {
+		return orm(c)
+			.select({email: user.email,createTime: user.createTime})
+			.from(user)
+			.where(eq(user.regKeyId, regKeyId))
+			.orderBy(desc(user.userId))
+			.all();
 	}
 };
 

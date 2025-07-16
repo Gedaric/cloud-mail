@@ -307,6 +307,20 @@ roleSelectUse().then(list => {
   roleList.push(...list)
 })
 
+const paramsStar = localStorage.getItem('user-params')
+if (paramsStar) {
+  const locaParams = JSON.parse(paramsStar)
+  params.num = locaParams.num
+  params.size = locaParams.size
+  params.timeSort = locaParams.timeSort
+  params.status = locaParams.status
+}
+
+watch(() => params, () => {
+  localStorage.setItem('user-params',JSON.stringify(params))
+}, {
+  deep: true
+})
 
 watch(() => roleStore.refresh, () => {
   roleSelectUse().then(list => {

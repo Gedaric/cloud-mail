@@ -16,4 +16,5 @@ import '../api/role-api'
 import '../api/sys-email-api'
 import '../api/init-api'
 import '../api/analysis-api'
+import '../api/reg-key-api'
 export default app;

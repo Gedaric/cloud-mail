@@ -2,10 +2,10 @@
   <div class="email-container">
     <div class="header-actions">
       <el-checkbox
-          v-model="checkAll"
-          :indeterminate="isIndeterminate"
-          :disabled="!emailList.length"
-          @change="handleCheckAllChange"
+                   v-model="checkAll"
+                   :indeterminate="isIndeterminate"
+                   :disabled="!emailList.length"
+                   @change="handleCheckAllChange"
       >
       </el-checkbox>
       <div class="header-left" :style="'padding-left:' + actionLeft">
@@ -33,7 +33,7 @@
                  :data-checked="item.checked"
                  @click="jumpDetails(item)"
             >
-              <el-checkbox v-model="item.checked" @click.stop></el-checkbox>
+              <el-checkbox :class=" props.type === 'sys-email' ? 'sys-email-checkbox' : 'checkbox'" v-model="item.checked" @click.stop></el-checkbox>
               <div @click.stop="starChange(item)" class="pc-star" v-if="showStar">
                 <Icon v-if="item.isStar" icon="fluent-color:star-16" width="20" height="20"/>
                 <Icon v-else icon="solar:star-line-duotone" width="18" height="18"/>
@@ -102,7 +102,9 @@
                   </div>
                   <div v-else></div>
                   <span class="name">
-                    <span>{{ item.name }}</span>
+                    <span>
+                      <slot name="name" :email="item"> {{ item.name }}</slot>
+                    </span>
                     <span>
                       <Icon v-if="item.isStar" icon="fluent-color:star-16" width="18" height="18"/>
                     </span>
@@ -111,7 +113,11 @@
                 </div>
                 <div>
                   <div class="email-text">
-                    <span class="email-subject">{{ item.subject }}</span>
+                    <span class="email-subject">
+                      <slot name="subject" :email="item">
+                        {{ item.subject }}
+                      </slot>
+                    </span>
                     <span class="email-content">{{ htmlToText(item) }}</span>
                   </div>
                   <div class="user-info" v-if="showUserInfo">
@@ -128,7 +134,7 @@
                       <span>{{ item.type === 0 ? item.toEmail : item.sendEmail }}</span>
                     </div>
                     <div class="del-status" v-if="item.isDel">
-                      <el-tag type="info" size="small">已删除</el-tag>
+                      <el-tag type="danger" size="small">已删除</el-tag>
                     </div>
                   </div>
                 </div>
@@ -201,11 +207,15 @@ const props = defineProps({
   allowStar: {
     type: Boolean,
     default: true
+  },
+  type: {
+    type: String,
+    default: ''
   }
 })
 
 
-const emit = defineEmits(['jump', 'refresh-before'])
+const emit = defineEmits(['jump', 'refresh-before', 'delete-draft'])
 
 const settingStore = useSettingStore()
 const uiStore = useUiStore();
@@ -355,13 +365,19 @@ function changeAccountShow() {
   uiStore.accountShow = !uiStore.accountShow;
 }
 
-
 const handleDelete = () => {
   ElMessageBox.confirm('确认批量删除这些邮件吗?', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
+
+    if (props.type === 'draft') {
+      const draftIds = getSelectedDraftsIds();
+      emit('delete-draft', draftIds);
+      return;
+    }
+
     const emailIds = getSelectedMailsIds();
     props.emailDelete(emailIds).then(() => {
       ElMessage({
@@ -394,7 +410,6 @@ function addItem(email) {
   if (existIndex > -1) {
     return
   }
-
 
   if (props.timeSort) {
     if (noLoading.value) {
@@ -430,6 +445,9 @@ function getSelectedMailsIds() {
   return emailList.filter(item => item.checked).map(item => item.emailId);
 }
 
+function getSelectedDraftsIds() {
+  return emailList.filter(item => item.checked).map(item => item.draftId);
+}
 
 function updateCheckStatus() {
   const checkedCount = emailList.filter(item => item.checked).length;
@@ -543,6 +561,7 @@ function loadData() {
     justify-content: center;
     align-items: center;
     height: 100%;
+    width: 100%;
   }
 
   .noLoading {
@@ -625,11 +644,24 @@ function loadData() {
     }
   }
 
-  .el-checkbox {
+  .checkbox {
     display: flex;
     padding-left: 15px;
     padding-right: 20px;
     justify-content: center;
+  }
+
+  .sys-email-checkbox {
+    display: flex;
+    padding-left: 15px;
+    padding-right: 20px;
+    justify-content: center;
+    @media (min-width: 1200px) {
+      justify-content: start;
+      height: 100%;
+      align-self: start;
+      padding-top: 3px;
+    }
   }
 
   .title-column {
@@ -642,7 +674,7 @@ function loadData() {
   .title {
     flex: 1;
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 240px 1fr;
     @media (max-width: 1199px) {
       padding-right: 15px;
     }
@@ -702,6 +734,9 @@ function loadData() {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        @media (min-width: 1200px) {
+          padding-left: 5px;
+        }
       }
 
       .email-content {
@@ -788,7 +823,7 @@ function loadData() {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    column-gap: 15px;
+    column-gap: 18px;
     row-gap: 8px;
     padding-left: 2px;
   }

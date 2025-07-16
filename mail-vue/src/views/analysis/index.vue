@@ -680,7 +680,7 @@ function createSendGauge() {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 20px;
-    @media (max-width: 1024px) {
+    @media (max-width: 1199px) {
       grid-template-columns: 1fr 1fr;
       gap: 15px;
     }
@@ -691,7 +691,7 @@ function createSendGauge() {
       background: #fff;
       border-radius: 8px;
       border: 1px solid var(--el-border-color);
-      padding: 25px 20px;
+      padding: 21px 20px;
       .top {
         display: grid;
         justify-content: space-between;

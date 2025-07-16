@@ -6,12 +6,13 @@
 </template>
 
 <script setup>
-import {ref, onMounted, onBeforeUnmount, watch, nextTick} from 'vue';
+import {ref, onMounted, onBeforeUnmount, watch, nextTick, shallowRef, defineEmits} from 'vue';
 import loading from "@/components/loading/index.vue";
 import {compressImage} from "@/utils/file-utils.js";
 defineExpose({
   clearEditor,
-  focus
+  focus,
+  getContent
 })
 
 const props = defineProps({
@@ -27,7 +28,7 @@ const props = defineProps({
 
 
 const emit = defineEmits(['change']);
-const editor = ref(null);
+const editor = shallowRef(null);
 const isInitialized = ref(false);
 const editorRef = ref(null);
 const showLoading = ref(false);
@@ -160,6 +161,10 @@ function focus() {
   nextTick(() => {
     editor.value.focus()
   })
+}
+
+function getContent() {
+  return editor.value.getContent()
 }
 
 

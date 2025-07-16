@@ -1,6 +1,3 @@
-import attService from './att-service';
-import constant from '../const/constant';
-
 const r2Service = {
 	async putObj(c, key, content, metadata) {
 		await c.env.r2.put(key, content, {

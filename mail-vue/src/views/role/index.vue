@@ -47,10 +47,15 @@
         </el-table>
       </div>
     </el-scrollbar>
-    <el-dialog class="dialog" v-model="roleFormShow" :title="dialogType.title" @closed="resetForm">
+    <el-dialog top="5vh" class="dialog" v-model="roleFormShow" :title="dialogType.title" @closed="resetForm">
       <div class="dialog-box">
         <el-input class="dialog-input" v-model="form.name" type="text" :maxlength="12" placeholder="身份名称" autocomplete="off" />
         <el-input class="dialog-input" v-model="form.description" :maxlength="30" type="text" placeholder="描述" autocomplete="off" />
+        <el-input-tag class="dialog-input-tag" tag-type="warning" :class="form.banEmail.length === 0 ? 'dialog-input' : '' " v-model="form.banEmail" @add-tag="banEmailAddTag"  type="text" placeholder="输入邮箱拦截收件, 拦截所有前缀 *@example.com" autocomplete="off" />
+        <el-radio-group class="dialog-radio" v-model="form.banEmailType" v-if="form.banEmail.length > 0">
+          <el-radio label="丢弃邮件" :value="0" />
+          <el-radio label="移除正文" :value="1" />
+        </el-radio-group>
         <div class="dialog-input">
           <el-input-number placeholder="排序" :min="0" :max="9999" v-model.number="form.sort" controls-position="right" autocomplete="off" />
         </div>
@@ -74,15 +79,18 @@
             <div>
               <span>{{node.label}}</span>
               <span class="send-num" v-if="data.permKey === 'email:send'" @click.stop>
-                <el-input-number  v-model="form.sendCount" controls-position="right" :min="0" :max="99999" size="small" placeholder="数量" >
+                <el-input-number  v-model="form.sendCount" controls-position="right" :max="99999" size="small" placeholder="数量" >
                 </el-input-number>
                   <el-select v-model="form.sendType" placeholder="Select" size="small" style="width: 60px;margin-left: 5px;">
                     <el-option label="总数" value="count" />
                     <el-option label="每天" value="day" />
                   </el-select>
+                <el-tooltip effect="dark" content="零无限制 负数无次数">
+                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
+                  </el-tooltip>
               </span>
               <span class="send-num" v-if="data.permKey === 'account:add'" @click.stop>
-                <el-input-number  v-model="form.accountCount" controls-position="right" :min="0" :max="99999" size="small" placeholder="数量" >
+                <el-input-number  v-model="form.accountCount" controls-position="right" :min="0"  :max="99999" size="small" placeholder="数量" >
                 </el-input-number>
               </span>
             </div>
@@ -102,6 +110,7 @@ import {roleAdd, roleDelete, rolePermTree, roleRoleList, roleSet, roleSetDef} fr
 import loading from '@/components/loading/index.vue';
 import {useRoleStore} from "@/store/role.js";
 import {useUserStore} from "@/store/user.js";
+import {isEmail} from "@/utils/verify-utils.js";
 
 defineOptions({
   name: 'role'
@@ -128,9 +137,11 @@ const dialogType = reactive({
 const form = reactive({
   name: null,
   description: null,
+  banEmail: [],
+  banEmailType: 0,
   sendType: 'count',
-  sendCount: '',
-  accountCount: '',
+  sendCount: 0,
+  accountCount: 0,
   sort: 0,
   isDefault: 0,
 })
@@ -144,6 +155,21 @@ refresh()
 rolePermTree().then(tree => {
   treeList.push(...tree)
 })
+
+function banEmailAddTag(val) {
+  const emails = Array.from(new Set(
+      val.split(/[,，]/).map(item => item.trim()).filter(item => item)
+  ));
+
+  form.banEmail.splice(form.banEmail.length - 1, 1)
+
+  emails.forEach(email => {
+    if (isEmail(email) && !form.banEmail.includes(email)) {
+      form.banEmail.push(email)
+    }
+  })
+}
+
 
 function roleFormClick() {
   if (dialogType.type === 'add') {
@@ -240,8 +266,10 @@ function resetForm() {
   form.description = null
   form.sort = 0
   form.sendType = 'count'
-  form.sendCount = ''
-  form.accountCount = ''
+  form.sendCount = 0
+  form.accountCount = 0
+  form.banEmail = []
+  form.banEmailType = 0
   tree.value.setCheckedKeys([])
 }
 
@@ -256,6 +284,7 @@ function openRoleSet(role) {
   form.sendType = role.sendType
   form.sendCount = role.sendCount
   form.accountCount = role.accountCount
+  form.banEmail = role.banEmail
   nextTick(() => {
     tree.value.setCheckedKeys(role.permIds)
   })
@@ -346,7 +375,7 @@ window.onresize = () => {
   padding: 9px 15px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   box-shadow: inset 0 -1px 0 0 rgba(100, 121, 143, 0.12);
   font-size: 18px;
   .search {
@@ -360,6 +389,14 @@ window.onresize = () => {
   .icon {
     cursor: pointer;
   }
+}
+
+.warning {
+  position: relative;
+  left: 5px;
+  top: 5px;
+  color: gray;
+  cursor: pointer;
 }
 
 :deep(.description) {
@@ -397,6 +434,12 @@ window.onresize = () => {
   .dialog-input {
     margin-bottom: 15px !important;
   }
+  .dialog-radio {
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  .dialog-input-tag {
+  }
 }
 
 .perm-expand  {
@@ -406,11 +449,11 @@ window.onresize = () => {
   bottom: 5px;
 }
 
+
 :deep(.el-dialog) {
-  margin-top: 15vh !important;
   margin-bottom: 20px !important;
-  width: 400px !important;
-  @media (max-width: 440px) {
+  width: 460px !important;
+  @media (max-width: 500px) {
     width: calc(100% - 40px) !important;
     margin-right: 20px !important;
     margin-left: 20px !important;

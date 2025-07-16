@@ -29,8 +29,8 @@ const requirePerms = [
 	'/role/tree',
 	'/role/set',
 	'/role/setDefault',
-	'/sys-email/list',
-	'/sys-email/delete',
+	'/sysEmail/list',
+	'/sysEmail/delete',
 	'/setting/physicsDeleteAll',
 	'/setting/setBackground',
 	'/setting/set',
@@ -41,7 +41,12 @@ const requirePerms = [
 	'/user/setType',
 	'/user/list',
 	'/user/resetSendCount',
-	'/user/add'
+	'/user/add',
+	'/regKey/add',
+	'/regKey/list',
+	'/regKey/delete',
+	'/regKey/clearNotUse',
+	'/regKey/history'
 ];
 
 const premKey = {
@@ -62,12 +67,15 @@ const premKey = {
 	'user:set-status': ['/user/setStatus'],
 	'user:set-type': ['/user/setType'],
 	'user:delete': ['/user/delete'],
-	'sys-email:query': ['/sys-email/list'],
-	'sys-email:delete': ['/sys-email/delete'],
+	'sys-email:query': ['/sysEmail/list'],
+	'sys-email:delete': ['/sysEmail/delete'],
 	'setting:query': ['/setting/query'],
 	'setting:set': ['/setting/set', '/setting/setBackground'],
 	'setting:clean': ['/setting/physicsDeleteAll'],
-	'analysis:query': ['/analysis/echarts']
+	'analysis:query': ['/analysis/echarts'],
+	'role-key:add': ['/regKey/add'],
+	'role-key:query': ['/regKey/list','/regKey/history'],
+	'role-key:delete': ['/regKey/delete','/regKey/clearNotUse'],
 };
 
 app.use('*', async (c, next) => {

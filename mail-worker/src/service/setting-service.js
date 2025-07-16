@@ -49,16 +49,6 @@ const settingService = {
 		await this.refresh(c);
 	},
 
-	async isRegister(c) {
-		const { register } = await this.query(c);
-		return register === settingConst.register.OPEN;
-	},
-
-	async isReceive(c) {
-		const { receive } = await this.query(c);
-		return receive === settingConst.receive.OPEN;
-	},
-
 	async isAddEmail(c) {
 		const { addEmail, manyEmail } = await this.query(c);
 		return addEmail === settingConst.addEmail.OPEN && manyEmail === settingConst.manyEmail.OPEN;
@@ -125,7 +115,8 @@ const settingService = {
 			siteKey: settingRow.siteKey,
 			background: settingRow.background,
 			loginOpacity: settingRow.loginOpacity,
-			domainList:settingRow.domainList
+			domainList:settingRow.domainList,
+			regKey: settingRow.regKey
 		};
 	}
 };

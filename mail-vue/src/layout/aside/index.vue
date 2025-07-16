@@ -11,10 +11,15 @@
           <Icon icon="hugeicons:mailbox-01" width="20" height="20" />
           <span class="menu-name" style="margin-left: 21px">收件箱</span>
         </el-menu-item>
-        <el-menu-item @click="router.push({name: 'send'})" index="send"
+        <el-menu-item @click="router.push({name: 'send'})" index="send" v-perm="'email:send'"
                       :class="route.meta.name === 'send' ? 'choose-item' : ''">
           <Icon icon="cil:send" width="20" height="20" />
           <span class="menu-name" style="margin-left: 21px">已发送</span>
+        </el-menu-item>
+        <el-menu-item @click="router.push({name: 'draft'})" index="draft" v-perm="'email:send'"
+                      :class="route.meta.name === 'draft' ? 'choose-item' : ''">
+          <Icon icon="ep:document" width="19" height="19" />
+          <span class="menu-name" style="margin-left: 22px">草稿箱</span>
         </el-menu-item>
         <el-menu-item @click="router.push({name: 'star'})" index="star"
                       :class="route.meta.name === 'star' ? 'choose-item' : ''">
@@ -46,8 +51,13 @@
         </el-menu-item>
         <el-menu-item @click="router.push({name: 'role'})" index="setting" v-perm="'role:query'"
                       :class="route.meta.name === 'role' ? 'choose-item' : ''">
-          <Icon icon="hugeicons:key-02" width="22" height="22" />
+          <Icon icon="fluent:lock-closed-16-regular" width="22" height="22" />
           <span class="menu-name" style="margin-left: 20px">权限控制</span>
+        </el-menu-item>
+        <el-menu-item @click="router.push({name: 'reg-key'})" index="reg-key" v-perm="'reg-key:query'"
+                      :class="route.meta.name === 'reg-key' ? 'choose-item' : ''">
+          <Icon icon="fluent:fingerprint-20-filled" width="22" height="22" />
+          <span class="menu-name" style="margin-left: 20px">注册密钥</span>
         </el-menu-item>
         <el-menu-item @click="router.push({name: 'sys-setting'})" index="sys-setting" v-perm="'setting:query'"
                       :class="route.meta.name === 'sys-setting' ? 'choose-item' : ''">

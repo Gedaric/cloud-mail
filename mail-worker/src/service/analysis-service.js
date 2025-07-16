@@ -5,10 +5,7 @@ import { desc, count, eq, and, ne, isNotNull } from 'drizzle-orm';
 import { emailConst } from '../const/entity-const';
 import kvConst from '../const/kv-const';
 import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone'
-import utc from 'dayjs/plugin/utc'
-dayjs.extend(utc)
-dayjs.extend(timezone)
+import { toUtc } from '../utils/date-uitil';
 const analysisService = {
 
 	async echarts(c) {
@@ -62,7 +59,7 @@ const analysisService = {
 	},
 
 	filterEmptyDay(data) {
-		const today = dayjs().tz('Asia/Shanghai').subtract(1, 'day');
+		const today = toUtc().tz('Asia/Shanghai').subtract(1, 'day');
 		const previousDays = Array.from({ length: 15 }, (_, i) => {
 			return today.subtract(i, 'day').format('YYYY-MM-DD');
 		}).reverse();

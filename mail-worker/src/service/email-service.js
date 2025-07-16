@@ -150,7 +150,7 @@ const emailService = {
 		}
 
 		if (send === settingConst.send.CLOSE) {
-			throw new BizError('邮箱发送功能已停用', 403);
+			throw new BizError('邮件发送功能已停用', 403);
 		}
 
 		if (attachments.length > 0 && manyType === 'divide') {
@@ -163,13 +163,17 @@ const emailService = {
 
 		if (c.env.admin !== userRow.email && roleRow.sendCount) {
 
+			if (roleRow.sendCount < 0) {
+				throw new BizError('用户无发送次数', 403);
+			}
+
 			if (userRow.sendCount >= roleRow.sendCount) {
-				if (roleRow.sendType === 'day') throw new BizError('已到达每日发送次数限制', 403);
-				if (roleRow.sendType === 'count') throw new BizError('已到达发送次数限制', 403);
+				if (roleRow.sendType === 'day') throw new BizError('发送次数已到达每日限制', 403);
+				if (roleRow.sendType === 'count') throw new BizError('发送次数已到达限制', 403);
 			}
 
 			if (userRow.sendCount + receiveEmail.length > roleRow.sendCount) {
-				if (roleRow.sendType === 'day') throw new BizError('剩余每日发送次数不足', 403);
+				if (roleRow.sendType === 'day') throw new BizError('当日剩余发送次数不足', 403);
 				if (roleRow.sendType === 'count') throw new BizError('剩余发送次数不足', 403);
 			}
 
@@ -178,18 +182,20 @@ const emailService = {
 
 		const accountRow = await accountService.selectById(c, accountId);
 
+		if (!accountRow) {
+			throw new BizError('发件人邮箱不存在');
+		}
+
 		const domain = emailUtils.getDomain(accountRow.email);
 		const resendToken = resendTokens[domain];
+
 		if (!resendToken) {
 			throw new BizError('resend密钥未配置');
 		}
 
-		if (!accountRow) {
-			throw new BizError('邮箱不存在');
-		}
 
 		if (accountRow.userId !== userId) {
-			throw new BizError('非当前用户所属邮箱');
+			throw new BizError('发件人邮箱非当前用户所有');
 		}
 
 		if (!name) {
@@ -488,7 +494,7 @@ const emailService = {
 
 	async allList(c, params) {
 
-		let { emailId, size, name, subject, accountEmail, sendEmail, userEmail, type, timeSort } = params;
+		let { emailId, size, name, subject, accountEmail, userEmail, type, timeSort } = params;
 
 		size = Number(size);
 

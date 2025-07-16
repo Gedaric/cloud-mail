@@ -12,6 +12,7 @@ export const setting = sqliteTable('setting', {
 	r2Domain: text('r2_domain'),
 	secretKey: text('secret_key'),
 	siteKey: text('site_key'),
+	regKey: integer('reg_key').default(1).notNull(),
 	background: text('background'),
 	tgBotToken: text('tg_bot_token').default('').notNull(),
 	tgChatId: text('tg_chat_id').default('').notNull(),

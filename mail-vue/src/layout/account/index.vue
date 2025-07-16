@@ -1,8 +1,8 @@
 <template>
   <div class="account-box">
     <div class="head-opt" >
-      <Icon v-perm="'account:add'" class="icon" icon="ion:add-outline" width="23" height="23" @click="add" />
-      <Icon class="icon" icon="ion:reload" width="18" height="18"  @click="refresh" />
+      <Icon v-perm="'account:add'" class="icon add" icon="ion:add-outline" width="23" height="23" @click="add" />
+      <Icon class="icon refresh" icon="ion:reload" width="18" height="18"  @click="refresh" />
     </div>
     <el-scrollbar class="scrollbar">
       <div v-infinite-scroll="getAccountList" :infinite-scroll-distance="600"  :infinite-scroll-immediate="false">
@@ -16,11 +16,12 @@
             </div>
             <div class="settings" @click.stop>
               <Icon icon="streamline-ultimate-color:copy-paste-1" width="19" height="19" @click.stop="copyAccount(item.email)"/>
-              <el-dropdown>
-                <Icon icon="fluent:settings-24-filled" width="21" height="21" color="#909399" />
+              <Icon icon="fluent:settings-24-filled" width="21" height="21" color="#909399" v-if="showNullSetting(item)" />
+              <el-dropdown v-else>
+                <Icon icon="fluent:settings-24-filled"  width="21" height="21" color="#909399" />
                 <template #dropdown >
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="openSetName(item)">改名</el-dropdown-item>
+                  <el-dropdown-menu >
+                    <el-dropdown-item v-if="hasPerm('email:send')" @click="openSetName(item)">改名</el-dropdown-item>
                     <el-dropdown-item v-if="item.accountId !== userStore.user.accountId && hasPerm('account:delete')" @click="remove(item)">删除</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -217,6 +218,10 @@ function openSetName (accountItem) {
   setNameShow.value = true
 }
 
+function showNullSetting(item) {
+  return !hasPerm('email:send') && !(item.accountId !== userStore.user.accountId && hasPerm('account:delete'))
+}
+
 function itemBg(accountId) {
   return accountStore.currentAccountId === accountId ? 'item-choose' : ''
 }
@@ -388,8 +393,16 @@ path[fill="#ffdda1"] {
     .icon{
       cursor: pointer;
     }
-    .icon:nth-child(2) {
-      margin-left: 15px;
+    .refresh {
+      margin-left: 10px;
+    }
+
+    .add {
+      margin-left: 2px;
+    }
+
+    .head-opt:not(.add) .refresh {
+      margin-left: 5px;
     }
   }
   .scrollbar {

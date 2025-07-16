@@ -10,6 +10,10 @@ export const roleConst = {
 		CLOSE: 0,
 		OPEN: 1
 	},
+	banEmailType: {
+		ALL: 0,
+		CONTENT: 1
+	},
 	sendType: {
 		COUNT: 'count',
 		DAY: 'day'
@@ -54,6 +58,11 @@ export const settingConst = {
 	register: {
 		OPEN: 0,
 		CLOSE: 1,
+	},
+	regKey: {
+		OPEN: 0,
+		CLOSE: 1,
+		OPTIONAL: 2,
 	},
 	receive: {
 		OPEN: 0,

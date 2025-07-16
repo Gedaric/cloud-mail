@@ -47,6 +47,16 @@ const routers = {
             menu: true
         }
     },
+    'reg-key:query':             {
+        path: '/sys/reg-key',
+        name: 'reg-key',
+        component: () => import('@/views/reg-key/index.vue'),
+        meta: {
+            title: '注册密钥',
+            name: 'reg-key',
+            menu: true
+        }
+    },
     'sys-email:query': {
         path: '/sys/email',
         name: 'sys-email',

@@ -1,10 +1,10 @@
 <template>
-  <div class="header">
+  <div class="header" :class="!hasPerm('email:send') ? 'not-send' : ''">
     <div class="header-btn">
       <hanburger @click="changeAside"></hanburger>
       <span class="breadcrumb-item">{{ route.meta.title }}</span>
     </div>
-    <div class="writer-box" @click="openSend">
+    <div v-perm="'email:send'" class="writer-box" @click="openSend">
       <div class="writer" >
         <Icon icon="material-symbols:edit-outline-sharp" width="22" height="22" />
       </div>
@@ -95,8 +95,12 @@ const sendType = computed(() => {
     return '无权限'
   }
 
-  if (userStore.user.role.sendCount === 0) {
+  if (!userStore.user.role.sendCount) {
     return '无限制'
+  }
+
+  if (userStore.user.role.sendCount < 0) {
+    return '无次数'
   }
 
   if (userStore.user.role.sendType === 'day') {
@@ -116,6 +120,11 @@ const sendCount = computed(() => {
   if (!userStore.user.role.sendCount) {
     return null
   }
+
+  if (userStore.user.role.sendCount < 0) {
+    return null
+  }
+
   return userStore.user.sendCount + '/' + userStore.user.role.sendCount
 })
 
@@ -246,6 +255,10 @@ function full() {
   height: 100%;
   gap: 10px;
   grid-template-columns: auto auto 1fr;
+}
+
+.header.not-send {
+  grid-template-columns: auto 1fr;
 }
 
 .writer-box {

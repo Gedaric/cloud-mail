@@ -8,9 +8,11 @@
                  :show-star="false"
                  show-user-info
                  show-status
+                 actionLeft="4px"
                  :show-account-icon="false"
                  @jump="jumpContent"
                  @refresh-before="refreshBefore"
+                 :type="'sys-email'"
 
     >
       <template #first>
@@ -23,7 +25,7 @@
             <div @click.stop="openSelect">
               <el-select
                   ref="mySelect"
-                  v-model="searchType"
+                  v-model="params.searchType"
                   placeholder="请选择"
                   class="select"
               >
@@ -59,10 +61,10 @@
 <script setup>
 import {starAdd, starCancel} from "@/request/star.js";
 import emailScroll from "@/components/email-scroll/index.vue"
-import {computed, defineOptions, reactive, ref} from "vue";
+import {computed, defineOptions, reactive, ref, watch} from "vue";
 import {useEmailStore} from "@/store/email.js";
 import {
-  sysEmailAll,
+  sysEmailList,
   sysEmailDelete
 } from "@/request/sys-email.js";
 import {Icon} from "@iconify/vue";
@@ -74,7 +76,6 @@ defineOptions({
 
 const emailStore = useEmailStore();
 const sysEmailScroll = ref({})
-const searchType = ref('name')
 const searchValue = ref('')
 const mySelect = ref()
 
@@ -88,15 +89,31 @@ const params = reactive({
   userEmail: null,
   accountEmail: null,
   name: null,
-  subject: null
+  subject: null,
+  searchType: 'name'
 })
 
 
 const selectTitle = computed(() => {
-  if (searchType.value === 'user') return '用户'
-  if (searchType.value === 'account') return '邮箱'
-  if (searchType.value === 'name') return '发件人'
-  if (searchType.value === 'subject') return '主题'
+  if (params.searchType === 'user') return '用户'
+  if (params.searchType === 'account') return '邮箱'
+  if (params.searchType === 'name') return '发件人'
+  if (params.searchType === 'subject') return '主题'
+})
+
+const paramsStar = localStorage.getItem('sys-email-params')
+if (paramsStar) {
+  const locaParams = JSON.parse(paramsStar)
+  params.type = locaParams.type
+  params.timeSort = locaParams.timeSort
+  params.status = locaParams.status
+  params.searchType = locaParams.searchType
+}
+
+watch(() => params, () => {
+  localStorage.setItem('sys-email-params',JSON.stringify(params))
+}, {
+  deep: true
 })
 
 function refreshBefore() {
@@ -107,7 +124,7 @@ function refreshBefore() {
   params.accountEmail = null
   params.name = null
   params.subject = null
-
+  params.searchType = 'name'
 }
 
 function search() {
@@ -117,19 +134,19 @@ function search() {
   params.name = null
   params.subject = null
 
-  if (searchType.value === 'user') {
+  if (params.searchType === 'user') {
     params.userEmail = searchValue.value
   }
 
-  if (searchType.value === 'account') {
+  if (params.searchType === 'account') {
     params.accountEmail = searchValue.value
   }
 
-  if (searchType.value === 'name') {
+  if (params.searchType === 'name') {
     params.name = searchValue.value
   }
 
-  if (searchType.value === 'subject') {
+  if (params.searchType === 'subject') {
     params.subject = searchValue.value
   }
 
@@ -151,7 +168,7 @@ function jumpContent(email) {
 
 
 function getEmailList(emailId, size) {
-  return sysEmailAll({emailId, size, ...params})
+  return sysEmailList({emailId, size, ...params})
 }
 </script>
 

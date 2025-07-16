@@ -29,6 +29,16 @@ const routes = [
                 }
             },
             {
+                path: '/draft',
+                name: 'draft',
+                component: () => import('@/views/draft/index.vue'),
+                meta: {
+                    title: '草稿箱',
+                    name: 'draft',
+                    menu: true
+                }
+            },
+            {
                 path: '/content',
                 name: 'content',
                 component: () => import('@/views/content/index.vue'),

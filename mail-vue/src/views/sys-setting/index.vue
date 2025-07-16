@@ -18,6 +18,24 @@
                 </div>
               </div>
               <div class="setting-item">
+                <div><span>注册码</span></div>
+                <div>
+                  <el-select
+                      @change="change"
+                      style="width: 80px;"
+                      v-model="setting.regKey"
+                      placeholder="Select"
+                  >
+                    <el-option
+                        v-for="item in regKeyOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                    />
+                  </el-select>
+                </div>
+              </div>
+              <div class="setting-item">
                 <div><span>添加邮箱</span></div>
                 <div>
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
@@ -34,29 +52,6 @@
                 <div>
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
                              v-model="setting.manyEmail"/>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div>
-                  <span>轮询刷新</span>
-                  <el-tooltip effect="dark" content="轮询请求服务器获取最新邮件">
-                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
-                  </el-tooltip>
-                </div>
-                <div>
-                  <el-select
-                      @change="change"
-                      style="width: 80px;"
-                      v-model="setting.autoRefreshTime"
-                      placeholder="Select"
-                  >
-                    <el-option
-                        v-for="item in options"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                    />
-                  </el-select>
                 </div>
               </div>
               <div class="setting-item">
@@ -136,6 +131,29 @@
                 </div>
               </div>
               <div class="setting-item">
+                <div>
+                  <span>轮询刷新</span>
+                  <el-tooltip effect="dark" content="轮询请求服务器获取最新邮件">
+                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
+                  </el-tooltip>
+                </div>
+                <div>
+                  <el-select
+                      @change="change"
+                      style="width: 80px;"
+                      v-model="setting.autoRefreshTime"
+                      placeholder="Select"
+                  >
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                    />
+                  </el-select>
+                </div>
+              </div>
+              <div class="setting-item">
                 <div><span>邮件发送</span></div>
                 <div>
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
@@ -145,14 +163,13 @@
               <div class="setting-item">
                 <div><span>添加 Resend Token</span></div>
                 <div>
+                  <el-button class="opt-button" style="margin-top: 0" @click="openResendList" size="small" type="primary">
+                    <Icon icon="ic:round-list" width="18" height="18"/>
+                  </el-button>
                   <el-button class="opt-button" style="margin-top: 0" @click="openResendForm" size="small" type="primary">
                     <Icon icon="material-symbols:add-rounded" width="16" height="16"/>
                   </el-button>
                 </div>
-              </div>
-              <div class="setting-item token-item" v-for="(value, key, index) in setting.resendTokens" :key="index">
-                <div><span>{{ key }}</span></div>
-                <div><span>{{ value }}</span></div>
               </div>
             </div>
           </div>
@@ -227,7 +244,7 @@
               <div class="setting-item">
                 <div><span>Site Key</span></div>
                 <div class="bot-verify">
-                  <span>{{ setting.siteKey || '空' }}</span>
+                  <span>{{ setting.siteKey }}</span>
                   <el-button class="opt-button" size="small" type="primary" @click="turnstileShow = true">
                     <Icon icon="lsicon:edit-outline" width="16" height="16"/>
                   </el-button>
@@ -236,7 +253,7 @@
               <div class="setting-item">
                 <div><span>Secret Key</span></div>
                 <div class="bot-verify">
-                  <span> {{ setting.secretKey || '空' }} </span>
+                  <span> {{ setting.secretKey }} </span>
                   <el-button class="opt-button" size="small" type="primary" @click="turnstileShow = true">
                     <Icon icon="lsicon:edit-outline" width="16" height="16"/>
                   </el-button>
@@ -279,7 +296,7 @@
           <el-button type="primary" :loading="settingLoading" @click="saveTitle">保存</el-button>
         </form>
       </el-dialog>
-      <el-dialog v-model="resendTokenFormShow" title="添加resend token" width="340" @closed="cleanResendTokenForm">
+      <el-dialog v-model="resendTokenFormShow" title="添加 Resend Token" width="340" @closed="cleanResendTokenForm">
         <form>
           <el-select style="margin-bottom: 15px" v-model="resendTokenForm.domain" placeholder="Select">
             <el-option
@@ -289,7 +306,7 @@
                 :value="item"
             />
           </el-select>
-          <el-input type="text" placeholder="令牌" v-model="resendTokenForm.token"/>
+          <el-input type="text" placeholder="输入内容添加，不填则删除" v-model="resendTokenForm.token"/>
           <el-button type="primary" :loading="settingLoading" @click="saveResendToken">保存</el-button>
         </form>
       </el-dialog>
@@ -299,7 +316,7 @@
           <el-button type="primary" :loading="settingLoading" @click="saveR2domain">保存</el-button>
         </form>
       </el-dialog>
-      <el-dialog v-model="turnstileShow" title="添加Turnstile密钥" width="340"
+      <el-dialog v-model="turnstileShow" title="添加 Turnstile 密钥" width="340"
                  @closed="turnstileForm.secretKey = '';turnstileForm.siteKey = ''">
         <form>
           <el-input type="text" placeholder="siteKey" v-model="turnstileForm.siteKey"/>
@@ -368,7 +385,7 @@
           </div>
         </template>
         <div class="forward-set-body">
-          <el-input-tag tag-type="warning" placeholder="多邮个箱用, 分开 example1.com,example2.com" v-model="forwardEmail" @add-tag="emailAddTag"></el-input-tag>
+          <el-input-tag tag-type="warning" placeholder="多个邮箱用, 分开 example1.com,example2.com" v-model="forwardEmail" @add-tag="emailAddTag"></el-input-tag>
         </div>
         <template #footer>
           <div class="dialog-footer">
@@ -392,7 +409,7 @@
             </div>
         </template>
         <div class="forward-set-body">
-          <el-input-tag placeholder="多邮个箱用, 分开 example1.com,example2.com" tag-type="success" v-model="ruleEmail" @add-tag="ruleEmailAddTag" />
+          <el-input-tag placeholder="多个邮箱用, 分开 example1.com,example2.com" tag-type="success" v-model="ruleEmail" @add-tag="ruleEmailAddTag" />
         </div>
         <template #footer>
           <div class="dialog-footer">
@@ -406,12 +423,18 @@
           </div>
         </template>
       </el-dialog>
+      <el-dialog class="resend-table" v-model="showResendList" title="Token 列表">
+        <el-table :data="resendList" >
+          <el-table-column :min-width="emailColumnWidth" property="key" label="域名" :show-overflow-tooltip="true" />
+          <el-table-column :width="tokenColumnWidth" property="value" label="token" fixed="right" :show-overflow-tooltip="true" />
+        </el-table>
+      </el-dialog>
     </el-scrollbar>
   </div>
 </template>
 
 <script setup>
-import {defineOptions, onMounted, reactive, ref} from "vue";
+import {computed, defineOptions, reactive, ref} from "vue";
 import {physicsDeleteAll, setBackground, settingQuery, settingSet} from "@/request/setting.js";
 import {useSettingStore} from "@/store/setting.js";
 import {useUserStore} from "@/store/user.js";
@@ -419,9 +442,10 @@ import {useAccountStore} from "@/store/account.js";
 import {Icon} from "@iconify/vue";
 import {cvtR2Url} from "@/utils/convert.js";
 import {storeToRefs} from "pinia";
-import { debounce } from 'lodash-es'
+import {debounce} from 'lodash-es'
 import {isEmail} from "@/utils/verify-utils.js";
 import loading from "@/components/loading/index.vue";
+import {getTextWidth} from "@/utils/text.js";
 
 defineOptions({
   name: 'sys-setting'
@@ -440,6 +464,7 @@ const turnstileShow = ref(false)
 const tgSettingShow = ref(false)
 const thirdEmailShow = ref(false)
 const forwardRulesShow = ref(false)
+const showResendList = ref(false)
 const settingStore = useSettingStore();
 const {settings: setting} = storeToRefs(settingStore);
 const editTitle = ref('')
@@ -455,6 +480,13 @@ const turnstileForm = reactive({
   siteKey: '',
   secretKey: ''
 })
+
+const regKeyOptions = [
+  {label: '开启', value: 0},
+  {label: '关闭', value: 1},
+  {label: '可选', value: 2},
+]
+
 const options = [
   {label: '关闭', value: 0},
   {label: '3s', value: 3},
@@ -468,12 +500,40 @@ const options = [
 const tgChatId = ref([])
 const tgBotStatus = ref(0)
 const tgBotToken = ref('')
-
 const forwardEmail = ref([])
 const forwardStatus = ref(0)
+const emailColumnWidth = ref(0)
+const tokenColumnWidth = ref(0)
 
 const ruleType = ref(0)
 const ruleEmail = ref([])
+const resendList = computed(() => {
+
+  let list = Object.keys(setting.value.resendTokens).map(key => {
+    return {
+      key: key,
+      value: setting.value.resendTokens[key]
+    };
+  })
+
+  if (list.length > 0) {
+
+    const key = list.reduce((a, b) =>
+        a.key.length > b.key.length ? a : b
+    ).key;
+
+    emailColumnWidth.value = getTextWidth(key) + 30
+
+    const value = list.reduce((a, b) =>
+        a.value.length > b.value.length ? a : b
+    ).value;
+
+    tokenColumnWidth.value = getTextWidth(value) + 30
+
+  }
+
+  return list;
+});
 
 settingQuery().then(settingData => {
   setting.value = settingData
@@ -491,6 +551,10 @@ function openTgSetting() {
     tgChatId.value.push(...list)
   }
   tgSettingShow.value = true
+}
+
+function openResendList() {
+  showResendList.value = true
 }
 
 function openThirdEmailSetting() {
@@ -896,6 +960,24 @@ function editSetting(settingForm, refreshStatus = true) {
     margin-right: 20px !important;
     margin-left: 20px !important;
   }
+}
+
+:deep(.resend-table.el-dialog) {
+  min-height: 300px;
+  width: 500px !important;
+  @media (max-width: 540px) {
+    width: calc(100% - 40px) !important;
+    margin-right: 20px !important;
+    margin-left: 20px !important;
+  }
+}
+
+:deep(.resend-table .el-dialog__header) {
+  padding-bottom: 5px;
+}
+
+:deep(.el-table__inner-wrapper:before) {
+  background: #fff;
 }
 
 :deep(.cut-dialog.el-dialog) {

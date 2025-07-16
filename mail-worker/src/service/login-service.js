@@ -1,7 +1,7 @@
 import BizError from '../error/biz-error';
 import userService from './user-service';
 import emailUtils from '../utils/email-utils';
-import { isDel, userConst } from '../const/entity-const';
+import { isDel, settingConst, userConst } from '../const/entity-const';
 import JwtUtils from '../utils/jwt-utils';
 import { v4 as uuidv4 } from 'uuid';
 import KvConst from '../const/kv-const';
@@ -14,15 +14,19 @@ import saltHashUtils from '../utils/crypto-utils';
 import cryptoUtils from '../utils/crypto-utils';
 import turnstileService from './turnstile-service';
 import roleService from './role-service';
+import regKeyService from './reg-key-service';
 import dayjs from 'dayjs';
+import { formatDetailDate, toUtc } from '../utils/date-uitil';
 
 const loginService = {
 
 	async register(c, params) {
 
-		const { email, password, token } = params;
+		const { email, password, token, code } = params;
 
-		if (!await settingService.isRegister(c)) {
+		const {regKey, register} = await settingService.query(c)
+
+		if (register === settingConst.register.CLOSE) {
 			throw new BizError('注册功能已关闭');
 		}
 
@@ -30,12 +34,35 @@ const loginService = {
 			throw new BizError('非法邮箱');
 		}
 
-		if (password.length < 6) {
+		if (password.length > 30) {
+			throw new BizError('密码长度超出限制');
+		}
+
+		if (emailUtils.getName(email).length > 30) {
+			throw new BizError('邮箱长度超出限制');
+		}
+
+		if (password.length > 6) {
 			throw new BizError('密码必须大于6位');
 		}
 
 		if (!c.env.domain.includes(emailUtils.getDomain(email))) {
 			throw new BizError('非法邮箱域名');
+		}
+
+		let type = null;
+		let regKeyId = 0
+
+		if (regKey === settingConst.regKey.OPEN) {
+			const result = await this.handleOpenRegKey(c, regKey, code)
+			type = result.type
+			regKeyId = result.regKeyId
+		}
+
+		if (regKey === settingConst.regKey.OPTIONAL) {
+			const result = await this.handleOpenOptional(c, regKey, code)
+			type = result.type
+			regKeyId = result.regKeyId
 		}
 
 		const accountRow = await accountService.selectByEmailIncludeDelNoCase(c, email);
@@ -45,7 +72,7 @@ const loginService = {
 		}
 
 		if (accountRow) {
-			throw new BizError('该邮箱已被其他用户绑定');
+			throw new BizError('该邮箱已被注册');
 		}
 
 		if (await settingService.isRegisterVerify(c)) {
@@ -54,13 +81,71 @@ const loginService = {
 
 		const { salt, hash } = await saltHashUtils.hashPassword(password);
 
-		const roleRow = await roleService.selectDefaultRole(c);
+		let defType = null
 
-		const userId = await userService.insert(c, { email, password: hash, salt, type: roleRow.roleId });
+		if (!type) {
+			const roleRow = await roleService.selectDefaultRole(c);
+			defType = roleRow.roleId
+		}
+
+		const userId = await userService.insert(c, { email, regKeyId,password: hash, salt, type: type || defType });
 
 		await userService.updateUserInfo(c, userId, true);
 
 		await accountService.insert(c, { userId: userId, email, name: emailUtils.getName(email) });
+
+		if (regKey !== settingConst.regKey.CLOSE && type) {
+			await regKeyService.reduceCount(c, code, 1);
+		}
+
+	},
+
+	async handleOpenRegKey(c, regKey, code) {
+
+		if (!code) {
+			throw new BizError('注册码不能为空');
+		}
+
+		const regKeyRow = await regKeyService.selectByCode(c, code);
+
+		if (!regKeyRow) {
+			throw new BizError('注册码不存在');
+		}
+
+		if (regKeyRow.count <= 0) {
+			throw new BizError('注册码使用次数已耗尽');
+		}
+
+		const today = toUtc().tz('Asia/Shanghai').startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+
+		if (expireTime.isBefore(today)) {
+			throw new BizError('注册码已过期');
+		}
+
+		return { type: regKeyRow.roleId, regKeyId: regKeyRow.regKeyId };
+	},
+
+	async handleOpenOptional(c, regKey, code) {
+
+		if (!code) {
+			return null
+		}
+
+		const regKeyRow = await regKeyService.selectByCode(c, code);
+
+		if (!regKeyRow) {
+			return null
+		}
+
+		const today = toUtc().tz('Asia/Shanghai').startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+
+		if (regKeyRow.count <= 0 || expireTime.isBefore(today)) {
+			return null
+		}
+
+		return { type: regKeyRow.roleId, regKeyId: regKeyRow.regKeyId };
 	},
 
 	async login(c, params) {
