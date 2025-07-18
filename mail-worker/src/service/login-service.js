@@ -42,7 +42,7 @@ const loginService = {
 			throw new BizError('邮箱长度超出限制');
 		}
 
-		if (password.length > 6) {
+		if (password.length <= 6) {
 			throw new BizError('密码必须大于6位');
 		}
 
@@ -55,14 +55,14 @@ const loginService = {
 
 		if (regKey === settingConst.regKey.OPEN) {
 			const result = await this.handleOpenRegKey(c, regKey, code)
-			type = result.type
-			regKeyId = result.regKeyId
+			type = result?.type
+			regKeyId = result?.regKeyId
 		}
 
 		if (regKey === settingConst.regKey.OPTIONAL) {
 			const result = await this.handleOpenOptional(c, regKey, code)
-			type = result.type
-			regKeyId = result.regKeyId
+			type = result?.type
+			regKeyId = result?.regKeyId
 		}
 
 		const accountRow = await accountService.selectByEmailIncludeDelNoCase(c, email);
